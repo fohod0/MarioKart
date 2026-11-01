@@ -1,0 +1,11 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Arduino build output
+build/
+*.elf
+*.bin
+*.map
