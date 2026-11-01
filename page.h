@@ -1,0 +1,1151 @@
+// Auto-generated from mariokartfinal.html - the controls page the robot serves over WiFi.
+// If you edit mariokartfinal.html, paste the new file between the R"MKF( and )MKF" markers.
+#pragma once
+const char INDEX_HTML[] PROGMEM = R"MKF(<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>MarioKart</title>
+<style>
+  :root {
+    --bg: #0b0e14; --panel: #151a24; --panel-2: #0e1219; --border: #2a3242;
+    --text: #e8ecf4; --muted: #7b8494; --accent: #e5483b; --accent-2: #3b82f6;
+    --good: #22c55e; --warn: #eab308; --bad: #ef4444; --weapon: #f59e0b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    padding: 20px 16px 40px;
+  }
+  h1 { font-size: 1.45rem; margin: 2px 0 14px; letter-spacing: 0.02em; }
+  h1 span { color: var(--accent); }
+  .card {
+    width: 100%; background: var(--panel); border: 2px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  .hint { font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+  .hint code, .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .hint code { background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; color: var(--text); }
+  button { font-family: inherit; }
+
+  /* ---------- connection ---------- */
+  #conn { max-width: 560px; }
+  #status {
+    font-weight: 800; font-size: 0.95rem; padding: 10px 14px; border-radius: 10px;
+    background: var(--panel-2); border: 2px solid var(--border); text-align: center; margin-bottom: 12px;
+  }
+  #status.ok { color: var(--good); } #status.bad { color: var(--bad); } #status.pending { color: var(--warn); }
+  .conn-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+  .conn-buttons button {
+    flex: 1 1 150px; padding: 13px 14px; border-radius: 11px; border: none; cursor: pointer;
+    font-size: 0.95rem; font-weight: 800; color: #fff;
+  }
+  #ble-btn { background: var(--accent-2); }
+  #wifi-btn { background: #0f766e; }
+  #disconnect-btn { background: transparent; border: 2px solid var(--border); color: var(--muted); }
+  .conn-buttons button:disabled { opacity: 0.45; cursor: default; }
+  #browser-note { margin-top: 12px; margin-bottom: 0; }
+  #browser-note b { color: var(--text); }
+
+  /* ---------- layout ---------- */
+  #panel { width: 100%; max-width: 560px; }
+  #readout {
+    text-align: center; font-weight: 700; padding: 11px; border-radius: 12px;
+    background: var(--panel); border: 2px solid var(--border); margin-bottom: 14px;
+  }
+  #readout .val { color: var(--accent-2); }
+
+  #mode-tabs, .style-tabs {
+    display: flex; gap: 6px; background: var(--panel); border: 2px solid var(--border);
+    border-radius: 14px; padding: 4px; margin-bottom: 14px;
+  }
+  .style-tabs { background: var(--panel-2); border-radius: 10px; padding: 3px; margin-bottom: 12px; }
+  .tab {
+    flex: 1; padding: 10px 6px; border-radius: 10px; border: none; background: transparent;
+    color: var(--muted); font-size: 0.86rem; font-weight: 700; cursor: pointer;
+  }
+  .style-tabs .tab { padding: 7px 6px; border-radius: 7px; font-size: 0.78rem; }
+  .tab.active { background: var(--accent-2); color: #fff; }
+
+  /* ---------- joystick ---------- */
+  .stick-row { display: flex; gap: 18px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  .stick-col { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .stick-label { font-size: 0.88rem; font-weight: 700; color: var(--muted); }
+  .stick-value { font-size: 0.84rem; font-weight: 700; color: var(--accent-2); font-family: ui-monospace, monospace; }
+  .track { background: var(--panel-2); border: 3px solid var(--border); border-radius: 18px; position: relative; touch-action: none; }
+  .track.vertical { width: 90px; height: clamp(130px, 36vh, 220px); }
+  .track.horizontal { width: clamp(130px, 36vh, 220px); height: 90px; }
+  .knob {
+    width: 62px; height: 62px; border-radius: 50%; background: #2a3548; border: 3px solid var(--accent-2);
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;
+  }
+  .small-btn {
+    padding: 9px 16px; border-radius: 10px; border: 2px solid var(--border); background: var(--panel-2);
+    color: var(--text); font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  }
+
+  /* ---------- rebind rows ---------- */
+  .bind-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .bind-row:last-child { border-bottom: none; }
+  .bind-name { font-weight: 700; font-size: 0.9rem; width: 80px; flex-shrink: 0; }
+  .bind-row.on .bind-name { color: #93c5fd; }
+  .bind-btn {
+    font-family: ui-monospace, monospace; font-size: 0.84rem; font-weight: 700; padding: 6px 12px; min-width: 76px;
+    border-radius: 8px; border: 2px solid var(--border); background: var(--panel-2); color: var(--text); cursor: pointer;
+    text-transform: uppercase;
+  }
+  .bind-btn.listening { border-color: var(--warn); color: var(--warn); }
+  .bind-val { margin-left: auto; font-family: ui-monospace, monospace; font-weight: 700; color: var(--muted); min-width: 38px; text-align: right; }
+  .bind-row.on .bind-val { color: var(--good); }
+  .reset-btn {
+    margin-top: 10px; width: 100%; padding: 8px; border-radius: 8px; border: 2px solid var(--border);
+    background: transparent; color: var(--muted); font-size: 0.8rem; cursor: pointer;
+  }
+  #pad-status { font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; }
+  #pad-status.ok { color: var(--good); }
+
+  /* ---------- weapon sliders ---------- */
+  .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .slider-row label { font-size: 0.85rem; font-weight: 700; width: 112px; flex-shrink: 0; }
+  .slider-row input { flex: 1; min-width: 0; }
+  .slider-row .mono { width: 72px; text-align: right; font-weight: 700; color: var(--accent-2); }
+  #weapon-readout { font-size: 0.84rem; font-weight: 700; text-align: center; color: var(--muted); }
+
+  /* ---------- formulas ---------- */
+  .formula-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .formula-row label { font-size: 0.85rem; font-weight: 700; width: 96px; flex-shrink: 0; }
+  .formula-row input {
+    flex: 1; min-width: 0; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--border);
+    background: var(--panel-2); color: var(--text); font-size: 0.95rem; font-family: ui-monospace, monospace;
+  }
+  .formula-row input.invalid { border-color: var(--bad); }
+  .formula-err { color: #f87171; font-size: 0.78rem; margin: -4px 0 8px 104px; min-height: 0; }
+  .wide-btn {
+    width: 100%; padding: 10px; border-radius: 8px; border: none; background: var(--accent-2);
+    color: #fff; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+  }
+
+  /* ---------- diagnostics ---------- */
+  .diag-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  .diag-cell { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; }
+  .diag-cell .k { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .diag-cell .v { font-family: ui-monospace, monospace; font-weight: 800; font-size: 0.95rem; margin-top: 2px; }
+  #diag-note { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  #log {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px;
+    font-family: ui-monospace, monospace; font-size: 0.74rem; color: var(--muted); height: 110px; overflow-y: auto;
+    margin-top: 10px; white-space: pre-wrap;
+  }
+  .two-btns { display: flex; gap: 8px; }
+  .two-btns button { flex: 1; }
+
+  /* ---------- weapon jog + equation help ---------- */
+  .jog-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .jog-btn {
+    flex: 1; padding: 16px; border-radius: 12px; border: 2px solid var(--weapon); background: #2a1f0b;
+    color: #fbbf24; font-size: 1.1rem; font-weight: 800; cursor: pointer; touch-action: none; user-select: none;
+  }
+  .jog-btn.on { background: var(--weapon); color: #111; }
+  #live-vals { font-size: 0.78rem; color: var(--accent-2); margin-bottom: 10px; line-height: 1.5; }
+  details.help { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+  details.help summary { cursor: pointer; color: var(--text); font-weight: 700; margin-bottom: 6px; }
+  details.help p { margin: 6px 0; }
+  details.help code { font-family: ui-monospace, monospace; background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; color: var(--text); }
+  .help-table { border-collapse: collapse; width: 100%; margin: 6px 0; }
+  .help-table td { padding: 4px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .formula-row label { width: 128px; }
+  .formula-err { margin-left: 136px; }
+
+  #stop-btn {
+    display: block; width: 100%; padding: 18px; border-radius: 14px; border: none; background: #b91c1c;
+    color: #fff; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.05em; cursor: pointer; margin-bottom: 16px;
+  }
+  #stop-btn:active { background: #7f1d1d; }
+  footer { font-size: 0.76rem; color: var(--muted); text-align: center; max-width: 560px; line-height: 1.6; }
+
+  @media (min-width: 980px) {
+    #panel { max-width: 1060px; display: flex; gap: 18px; align-items: flex-start; }
+    #col-left, #col-right { flex: 1; min-width: 0; }
+  }
+  @media (orientation: landscape) and (max-height: 520px) {
+    body { padding: 10px 16px 20px; }
+    h1 { font-size: 1.15rem; margin-bottom: 8px; }
+    #panel { max-width: 1060px; display: flex; gap: 14px; align-items: flex-start; }
+    #col-left, #col-right { flex: 1; min-width: 0; }
+    .card { padding: 10px 12px; margin-bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <h1><span>MarioKart</span></h1>
+
+  <!-- ================= connection ================= -->
+  <div class="card" id="conn">
+    <div id="status" class="bad">Not connected</div>
+    <div class="conn-buttons">
+      <button id="ble-btn">Connect via Bluetooth</button>
+      <button id="wifi-btn">Connect via WiFi</button>
+      <button id="disconnect-btn" disabled>Disconnect</button>
+    </div>
+    <div class="hint" id="browser-note"></div>
+  </div>
+
+  <div id="panel">
+    <div id="col-left">
+      <div id="readout">Left: <span class="val" id="left-val">stopped</span> &nbsp;·&nbsp; Right: <span class="val" id="right-val">stopped</span></div>
+
+      <div id="mode-tabs">
+        <button class="tab" data-mode="joystick">Joystick</button>
+        <button class="tab" data-mode="keyboard">Keyboard</button>
+        <button class="tab" data-mode="controller">Controller</button>
+      </div>
+
+      <!-- joystick -->
+      <div class="card mode" id="mode-joystick">
+        <div class="stick-row">
+          <div class="stick-col">
+            <div class="stick-label" id="stick-a-label">Stick 1</div>
+            <div class="track" id="stick-a"><div class="knob"></div></div>
+            <div class="stick-value" id="stick-a-val">0</div>
+          </div>
+          <button class="small-btn" id="swap-btn">Swap sticks</button>
+          <div class="stick-col">
+            <div class="stick-label" id="stick-b-label">Stick 2</div>
+            <div class="track" id="stick-b"><div class="knob"></div></div>
+            <div class="stick-value" id="stick-b-val">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- keyboard -->
+      <div class="card mode" id="mode-keyboard">
+        <div class="hint">These four keys are the W, A, S and D inputs in the drive equations. Click one to rebind it, then press the new key. (The weapon's L / R hot keys are set in the Weapon card.)</div>
+        <div id="key-rows"></div>
+        <button class="reset-btn" id="key-reset">Reset to WASD</button>
+      </div>
+
+      <!-- controller -->
+      <div class="card mode" id="mode-controller">
+        <div id="pad-status">No controller detected - press any button on it.</div>
+        <div class="style-tabs">
+          <button class="tab" data-style="playstation">PS4 / PS5</button>
+          <button class="tab" data-style="xbox">Xbox</button>
+        </div>
+        <div class="hint">Click a binding, then press a button or push a stick/trigger. Sticks and triggers give proportional values (0 to 1) for W, A, S and D. L1 / R1 (LB / RB) sweep the weapon.</div>
+        <div id="pad-rows"></div>
+        <button class="reset-btn" id="pad-reset">Reset to left stick</button>
+      </div>
+
+      <!-- weapon -->
+      <div class="card" id="weapon-card">
+        <h2>Weapon (servo)</h2>
+        <div class="hint">Hold <b>L</b> or <b>R</b> to sweep the arm that way. Let go and it glides back to its rest position.
+          Keyboard hot keys are set below (any mode). Controller: <b>L1 / LB</b> = L, <b>R1 / RB</b> = R.</div>
+        <div class="jog-row">
+          <button class="jog-btn" id="jog-l">◀ L</button>
+          <button class="jog-btn" id="jog-r">R ▶</button>
+        </div>
+        <div class="hint" style="margin-bottom:2px">Click a key to rebind it, then press the new key.</div>
+        <div id="jog-key-rows"></div>
+        <button class="reset-btn" id="jog-key-reset" style="margin:4px 0 12px">Reset to Q / E</button>
+        <div class="slider-row">
+          <label for="servo-speed">Swing speed</label>
+          <input type="range" id="servo-speed" min="10" max="300" step="5">
+          <span class="mono" id="servo-speed-val"></span>
+        </div>
+        <div class="slider-row">
+          <label for="servo-rest">Retract speed</label>
+          <input type="range" id="servo-rest" min="0" max="300" step="5">
+          <span class="mono" id="servo-rest-val"></span>
+        </div>
+        <div class="hint" style="margin:4px 0 6px">Swing speed = how fast the arm sweeps while you hold L / R. Retract speed = how fast it glides back when you let go (0 = it stays where you left it). Both in degrees per second.</div>
+        <div id="weapon-readout">Servo: holding position</div>
+      </div>
+    </div>
+
+    <div id="col-right">
+      <button id="stop-btn">STOP</button>
+
+      <!-- diagnostics -->
+      <div class="card" id="diag-card">
+        <h2>Robot diagnostics</h2>
+        <div id="diag-note">What the robot itself reports. If "Cmds" keeps rising and L / R change when you drive but the wheels don't turn, the problem is wiring/power, not code.</div>
+        <div class="diag-grid">
+          <div class="diag-cell"><div class="k">Left</div><div class="v" id="d-left">-</div></div>
+          <div class="diag-cell"><div class="k">Right</div><div class="v" id="d-right">-</div></div>
+          <div class="diag-cell"><div class="k">Servo</div><div class="v" id="d-servo">-</div></div>
+          <div class="diag-cell"><div class="k">Cmds</div><div class="v" id="d-cmds">-</div></div>
+        </div>
+        <div class="two-btns">
+          <button class="small-btn" id="test-btn">Run hardware test</button>
+          <button class="small-btn" id="clear-log-btn">Clear log</button>
+        </div>
+        <div id="log"></div>
+      </div>
+
+      <!-- formulas -->
+      <div class="card" id="formula-card">
+        <h2>Drive equations</h2>
+        <div class="formula-row"><label for="f-left">Left(W,A,S,D) =</label><input id="f-left" type="text" spellcheck="false"></div>
+        <div class="formula-err" id="f-left-err"></div>
+        <div class="formula-row"><label for="f-right">Right(W,A,S,D) =</label><input id="f-right" type="text" spellcheck="false"></div>
+        <div class="formula-err" id="f-right-err"></div>
+        <div class="two-btns" style="margin-bottom:10px">
+          <button class="wide-btn" id="f-save">Save equations</button>
+          <button class="small-btn" id="f-reset">Reset to default</button>
+        </div>
+        <div id="live-vals" class="mono"></div>
+        <details class="help" open>
+          <summary>How the equations work</summary>
+          <table class="help-table">
+            <tr><td><code>W</code></td><td>Forward input: 0 = not pressed, 1 = fully pressed</td></tr>
+            <tr><td><code>A</code></td><td>Left input, 0 to 1</td></tr>
+            <tr><td><code>S</code></td><td>Back input, 0 to 1</td></tr>
+            <tr><td><code>D</code></td><td>Right input, 0 to 1</td></tr>
+          </table>
+          <p>Keys are always 0 or 1. Controller sticks/triggers and the on-screen sticks give anything in between (e.g. W = 0.5 at half throttle).</p>
+          <p><b>Left</b> sets the left motor (ENA), <b>Right</b> sets the right motor (ENB). The answer means: <b>+1</b> full forward, <b>0</b> stop, <b>−1</b> full reverse. Anything above 1 or below −1 is capped.</p>
+          <table class="help-table">
+            <tr><td><code>+</code></td><td>add</td><td><code>W + D</code></td><td>forward, plus extra when D is held</td></tr>
+            <tr><td><code>-</code></td><td>subtract</td><td><code>W - S</code></td><td>forward minus back</td></tr>
+            <tr><td><code>*</code></td><td>multiply</td><td><code>0.5*W</code></td><td>half speed forward</td></tr>
+            <tr><td><code>/</code></td><td>divide</td><td><code>W/2</code></td><td>also half speed</td></tr>
+            <tr><td><code>( )</code></td><td>group</td><td><code>(W - S) - D</code></td><td>work out W - S first</td></tr>
+          </table>
+          <p>Always write <code>*</code> for multiply: <code>0.5*A</code>, not <code>0.5A</code>. Example: <code>W - S - 0.5*A</code>. Click Save (or press Enter) to apply.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Bluetooth: Chrome, Edge, Opera, or Brave (after enabling its Bluetooth flag) on a laptop.
+    WiFi: any browser on any device - join the robot's WiFi network, then open http://192.168.4.1.
+    Releasing all input, STOP, closing the tab, or losing the link all stop the motors.
+  </footer>
+
+<script>
+'use strict';
+// =====================================================================
+// Constants - must match mariokartfinal.ino
+// =====================================================================
+const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const RX_UUID      = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // page -> robot
+const TX_UUID      = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // robot -> page (status)
+const ROBOT_URL    = 'http://192.168.4.1';
+const SEND_MS      = 120;   // keepalive cadence (robot stops motors after 400 ms of silence)
+const TEST_STEPS = ['', 'left motor forward', 'left motor reverse', 'right motor forward', 'right motor reverse', 'servo left', 'servo right', 'servo back to rest'];
+
+const $ = (id) => document.getElementById(id);
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+// ---------- storage that never throws ----------
+function load(key, fallback) {
+  try { const raw = localStorage.getItem(key); return raw === null ? fallback : JSON.parse(raw); }
+  catch { return fallback; }
+}
+function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* not persisted */ } }
+
+// ---------- log ----------
+function log(msg) {
+  const el = $('log');
+  const t = new Date().toLocaleTimeString([], { hour12: false });
+  el.textContent += `[${t}] ${msg}\n`;
+  const lines = el.textContent.split('\n');
+  if (lines.length > 80) el.textContent = lines.slice(-80).join('\n');
+  el.scrollTop = el.scrollHeight;
+}
+$('clear-log-btn').addEventListener('click', () => { $('log').textContent = ''; });
+
+function setStatus(text, cls) { const el = $('status'); el.textContent = text; el.className = cls; }
+
+// =====================================================================
+// Link layer - one write in flight, newest value per kind wins
+// =====================================================================
+const link = {
+  type: null,            // 'ble' | 'wifi' | null
+  device: null, rx: null, tx: null,
+  base: '',              // WiFi base URL ('' when the robot served this page)
+  busy: false,
+  pending: { cmd: null, servo: null, motor: null },
+  fails: 0,
+};
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+async function rawWrite(msg) {
+  if (link.type === 'ble') {
+    const bytes = encoder.encode(msg);
+    if (link.rx.writeValueWithoutResponse) await link.rx.writeValueWithoutResponse(bytes);
+    else await link.rx.writeValue(bytes);
+  } else if (link.type === 'wifi') {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 1200);
+    try {
+      const res = await fetch(`${link.base}/cmd?c=${encodeURIComponent(msg)}`, { cache: 'no-store', signal: ctrl.signal });
+      const text = await res.text();
+      onRobotStatus(text);
+    } finally { clearTimeout(timer); }
+  }
+}
+
+function queueSend(kind, msg) {
+  if (!link.type) return;
+  link.pending[kind] = msg;
+  pump();
+}
+
+async function pump() {
+  if (link.busy) return;
+  link.busy = true;
+  try {
+    while (link.type) {
+      const kind = ['cmd', 'servo', 'motor'].find((k) => link.pending[k] !== null);
+      if (!kind) break;
+      const msg = link.pending[kind];
+      link.pending[kind] = null;
+      try {
+        await rawWrite(msg);
+        if (link.fails > 0) { link.fails = 0; setStatus(connectedLabel(), 'ok'); log('link recovered'); }
+      } catch (err) {
+        link.fails++;
+        if (link.fails === 1) log(`send failed: ${err.message || err}`);
+        if (link.type === 'wifi' && link.fails >= 4) setStatus('WiFi link lost - check you are on the robot\'s WiFi', 'pending');
+        if (link.fails > 2) await new Promise((r) => setTimeout(r, 150));
+      }
+    }
+  } finally { link.busy = false; }
+}
+
+function connectedLabel() {
+  if (link.type === 'ble') return 'Connected via Bluetooth to ' + (link.device && link.device.name ? link.device.name : 'robot');
+  if (link.type === 'wifi') return 'Connected via WiFi';
+  return 'Not connected';
+}
+
+function onConnected() {
+  link.fails = 0;
+  setStatus(connectedLabel(), 'ok');
+  $('ble-btn').disabled = true; $('wifi-btn').disabled = true; $('disconnect-btn').disabled = false;
+  log(connectedLabel());
+  updateWeapon(true);
+  sendDrive();
+}
+
+function onDisconnected(reason) {
+  const was = link.type;
+  link.type = null; link.rx = null; link.tx = null;
+  link.pending = { cmd: null, servo: null, motor: null };
+  setStatus(reason || 'Disconnected', 'bad');
+  $('ble-btn').disabled = false; $('wifi-btn').disabled = false; $('disconnect-btn').disabled = true;
+  if (was) log(reason || 'disconnected');
+  releaseAllInputs();
+  ['d-left', 'd-right', 'd-servo', 'd-cmds'].forEach((id) => { $(id).textContent = '-'; });
+}
+
+// ---------- robot status: "ST:<left>,<right>,<servo>,<cmds>,<testStep>" ----------
+let lastTestStep = 0;
+function onRobotStatus(text) {
+  if (!text || !text.startsWith('ST:')) return;
+  const p = text.slice(3).split(',').map(Number);
+  if (p.length < 5 || p.some(Number.isNaN)) return;
+  $('d-left').textContent = p[0];
+  $('d-right').textContent = p[1];
+  $('d-servo').textContent = p[2] + '°';
+  $('d-cmds').textContent = p[3];
+  if (p[4] !== lastTestStep) {
+    if (p[4] > 0) log(`hardware test: ${TEST_STEPS[p[4]] || 'step ' + p[4]}`);
+    else if (lastTestStep > 0) log('hardware test finished');
+    lastTestStep = p[4];
+  }
+}
+
+// =====================================================================
+// Bluetooth
+// =====================================================================
+function bleUsable() { return !!(navigator.bluetooth && window.isSecureContext); }
+
+async function connectBle() {
+  if (!bleUsable()) { explainBrowser(true); return; }
+  try {
+    if (navigator.bluetooth.getAvailability && !(await navigator.bluetooth.getAvailability())) {
+      setStatus('Bluetooth is off on this computer - turn it on and try again', 'bad');
+      return;
+    }
+  } catch { /* some browsers don't implement getAvailability */ }
+  $('ble-btn').disabled = true;
+  setStatus('Pick your robot in the popup…', 'pending');
+  try {
+    const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
+    device.addEventListener('gattserverdisconnected', () => { if (link.device === device) onDisconnected('Bluetooth disconnected'); });
+    setStatus('Connecting…', 'pending');
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    const rx = await service.getCharacteristic(RX_UUID);
+    let tx = null;
+    try {
+      tx = await service.getCharacteristic(TX_UUID);
+      await tx.startNotifications();
+      tx.addEventListener('characteristicvaluechanged', (e) => onRobotStatus(decoder.decode(e.target.value)));
+    } catch { log('robot has no status channel (older firmware?) - diagnostics unavailable'); tx = null; }
+    link.device = device; link.rx = rx; link.tx = tx; link.type = 'ble';
+    onConnected();
+  } catch (err) {
+    const msg = err && err.name === 'NotFoundError' ? 'No robot chosen' : 'Bluetooth failed: ' + (err.message || err);
+    setStatus(msg, 'bad');
+    $('ble-btn').disabled = false;
+  }
+}
+
+// =====================================================================
+// WiFi (robot serves this page at http://192.168.4.1)
+// =====================================================================
+async function wifiPing(base) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 1500);
+  try {
+    const res = await fetch(`${base}/cmd?c=P`, { cache: 'no-store', signal: ctrl.signal });
+    const text = await res.text();
+    return text.startsWith('ST:') ? text : null;
+  } catch { return null; } finally { clearTimeout(timer); }
+}
+
+const servedByRobot = location.protocol === 'http:' && location.hostname !== '' && location.hostname !== 'localhost';
+
+async function connectWifi() {
+  if (!servedByRobot) {
+    // Opened as a local file: the controls must be loaded from the robot itself.
+    setStatus('Join the robot\'s WiFi, then open http://192.168.4.1', 'pending');
+    log('WiFi mode: 1) join the WiFi network named after your robot (password in the sketch, default "mariokart")');
+    log('           2) open http://192.168.4.1 in any browser - this page loads from the robot');
+    if (confirm('Are you already connected to the robot\'s WiFi network?\n\nOK = open the controls from the robot now\nCancel = I\'ll join it first')) {
+      location.href = ROBOT_URL;
+    }
+    return;
+  }
+  setStatus('Connecting over WiFi…', 'pending');
+  const st = await wifiPing('');
+  if (!st) { setStatus('Robot not answering - are you on its WiFi?', 'bad'); return; }
+  link.base = ''; link.type = 'wifi';
+  onRobotStatus(st);
+  onConnected();
+}
+
+function disconnect() {
+  if (link.type === 'ble' && link.device && link.device.gatt.connected) {
+    stopAll();
+    setTimeout(() => { try { link.device.gatt.disconnect(); } catch { /* ignore */ } }, 150);
+  } else {
+    stopAll();
+    setTimeout(() => onDisconnected('Disconnected'), 150);
+  }
+}
+
+$('ble-btn').addEventListener('click', connectBle);
+$('wifi-btn').addEventListener('click', connectWifi);
+$('disconnect-btn').addEventListener('click', disconnect);
+
+// ---------- browser guidance ----------
+function explainBrowser(fromClick) {
+  const note = $('browser-note');
+  const brave = !!navigator.brave;
+  const ua = navigator.userAgent;
+  const firefox = /firefox/i.test(ua);
+  const safari = /safari/i.test(ua) && !/chrome|chromium|edg/i.test(ua);
+  let html = '';
+  if (servedByRobot) {
+    html = 'Loaded from the robot over WiFi - this works in any browser. (Bluetooth is not available on this page; open mariokartfinal.html from your laptop for Bluetooth.)';
+  } else if (bleUsable()) {
+    html = '<b>Bluetooth ready.</b> Or use WiFi from any browser.';
+  } else if (brave) {
+    html = '<b>Brave:</b> Bluetooth is off by default. Open <code>brave://flags/#brave-web-bluetooth-api</code>, set it to <b>Enabled</b>, relaunch Brave, then reopen this page. Or use <b>WiFi</b>, which works without any setting.';
+  } else if (firefox || safari) {
+    html = `<b>${firefox ? 'Firefox' : 'Safari'}</b> has no Bluetooth support for web pages. Use <b>WiFi</b> (works here), or open this file in Chrome / Edge for Bluetooth.`;
+  } else {
+    html = 'This browser has no Web Bluetooth. Use <b>WiFi</b>, or open this file in Chrome / Edge for Bluetooth.';
+  }
+  note.innerHTML = html;
+  if (fromClick) setStatus('Bluetooth not available in this browser - see note below', 'bad');
+}
+
+// =====================================================================
+// Drive equations: Left(W, A, S, D) and Right(W, A, S, D)
+// W, A, S, D = how hard forward / left / back / right is pressed, 0..1
+// Tiny safe parser - no eval()
+// =====================================================================
+const DEFAULT_FORMULAS = { left: '(W - S) - D', right: '(W - S) - A' };
+let formulas = Object.assign({}, DEFAULT_FORMULAS, load('mkf-formulas-wasd', {}));
+
+function compile(expr) {
+  if (typeof expr !== 'string' || !expr.trim()) throw new Error('Equation cannot be empty');
+  const bad = expr.match(/[^0-9WASDwasd+\-*/().\s]/);
+  if (bad) throw new Error(`"${bad[0]}" isn't allowed - use numbers, W, A, S, D, + - * / and ( )`);
+  let i = 0;
+  const s = expr;
+  const ws = () => { while (i < s.length && /\s/.test(s[i])) i++; };
+  function sum() {
+    let left = product(); ws();
+    while (s[i] === '+' || s[i] === '-') {
+      const op = s[i++]; const right = product(); const l = left;
+      left = op === '+' ? (v) => l(v) + right(v) : (v) => l(v) - right(v);
+      ws();
+    }
+    return left;
+  }
+  function product() {
+    let left = factor(); ws();
+    while (s[i] === '*' || s[i] === '/') {
+      const op = s[i++]; const right = factor(); const l = left;
+      left = op === '*' ? (v) => l(v) * right(v) : (v) => l(v) / right(v);
+      ws();
+    }
+    return left;
+  }
+  function factor() {
+    ws();
+    const c = s[i];
+    if (c === undefined) throw new Error('Equation ends too early - something is missing after the last operator');
+    if (c === '-') { i++; const f = factor(); return (v) => -f(v); }
+    if (c === '+') { i++; return factor(); }
+    if (c === '(') { i++; const e = sum(); ws(); if (s[i] !== ')') throw new Error('Missing a closing bracket )'); i++; return e; }
+    const up = c.toUpperCase();
+    if (up === 'W' || up === 'A' || up === 'S' || up === 'D') {
+      i++;
+      if (/[0-9(WASDwasd]/.test(s[i] || '')) throw new Error(`Put * between ${up} and "${s[i]}" (e.g. 0.5*${up})`);
+      return (v) => v[up];
+    }
+    const start = i;
+    while (i < s.length && /[0-9.]/.test(s[i])) i++;
+    if (i === start) throw new Error(`Unexpected "${c}"`);
+    const n = Number(s.slice(start, i));
+    if (!Number.isFinite(n)) throw new Error(`"${s.slice(start, i)}" isn't a number`);
+    if (/[WASDwasd(]/.test(s[i] || '')) throw new Error(`Put * between ${s.slice(start, i)} and "${s[i]}" (e.g. ${s.slice(start, i)}*${s[i].toUpperCase()})`);
+    return () => n;
+  }
+  const fn = sum(); ws();
+  if (i !== s.length) throw new Error(`Unexpected "${s.slice(i)}"`);
+  return fn;
+}
+
+let leftFn, rightFn;
+try { leftFn = compile(formulas.left); } catch { formulas.left = DEFAULT_FORMULAS.left; leftFn = compile(formulas.left); }
+try { rightFn = compile(formulas.right); } catch { formulas.right = DEFAULT_FORMULAS.right; rightFn = compile(formulas.right); }
+$('f-left').value = formulas.left;
+$('f-right').value = formulas.right;
+
+function saveFormulas() {
+  let ok = true;
+  for (const side of ['left', 'right']) {
+    const input = $('f-' + side), err = $('f-' + side + '-err');
+    try {
+      const fn = compile(input.value);
+      if (side === 'left') leftFn = fn; else rightFn = fn;
+      formulas[side] = input.value;
+      input.classList.remove('invalid'); err.textContent = '';
+    } catch (e) {
+      input.classList.add('invalid'); err.textContent = e.message; ok = false;
+    }
+  }
+  if (ok) { save('mkf-formulas-wasd', formulas); log(`equations saved: Left = ${formulas.left}, Right = ${formulas.right}`); }
+  sendDrive();
+}
+$('f-save').addEventListener('click', saveFormulas);
+$('f-reset').addEventListener('click', () => {
+  $('f-left').value = DEFAULT_FORMULAS.left; $('f-right').value = DEFAULT_FORMULAS.right; saveFormulas();
+});
+['left', 'right'].forEach((side) => $('f-' + side).addEventListener('input', () => {
+  $('f-' + side).classList.remove('invalid'); $('f-' + side + '-err').textContent = '';
+}));
+['left', 'right'].forEach((side) => $('f-' + side).addEventListener('keydown', (e) => { if (e.key === 'Enter') saveFormulas(); }));
+
+// =====================================================================
+// Input modes - each gives W, A, S, D in 0..1
+// =====================================================================
+const ACTIONS = ['forward', 'backward', 'left', 'right'];
+const ACTION_LABEL = { forward: 'W  Forward', backward: 'S  Back', left: 'A  Left', right: 'D  Right' };
+let mode = load('mkf-mode', 'keyboard');
+if (!['joystick', 'keyboard', 'controller'].includes(mode)) mode = 'keyboard';
+
+function currentWASD() {
+  if (mode === 'joystick') return stickWASD();
+  if (mode === 'keyboard') return keyWASD();
+  return padWASD();
+}
+
+function computeSpeeds() {
+  const v = currentWASD();
+  let l = 0, r = 0;
+  try { l = leftFn(v); } catch { l = 0; }
+  try { r = rightFn(v); } catch { r = 0; }
+  if (!Number.isFinite(l)) l = 0;
+  if (!Number.isFinite(r)) r = 0;
+  return { v, left: Math.round(clamp(l, -1, 1) * 255), right: Math.round(clamp(r, -1, 1) * 255) };
+}
+
+function fmt(speed) {
+  if (speed === 0) return 'stopped';
+  return (speed > 0 ? 'fwd ' : 'rev ') + Math.round(Math.abs(speed) / 2.55) + '%';
+}
+const n2 = (x) => (Math.round(x * 100) / 100).toString();
+
+// One message carries both the drive and the weapon so WiFi sends one request per tick
+function sendDrive() {
+  const { v, left, right } = computeSpeeds();
+  $('left-val').textContent = fmt(left);
+  $('right-val').textContent = fmt(right);
+  $('live-vals').textContent = `Now: W=${n2(v.W)}  A=${n2(v.A)}  S=${n2(v.S)}  D=${n2(v.D)}  →  Left=${n2(left / 255)}  Right=${n2(right / 255)}`;
+  queueSend('motor', `M:${left},${right};J:${weaponDir()},${servo.speed},${servo.rest}`);
+}
+
+function setMode(next) {
+  if (next === mode) return;
+  releaseAllInputs();
+  mode = next;
+  save('mkf-mode', mode);
+  document.querySelectorAll('#mode-tabs .tab').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+  ['joystick', 'keyboard', 'controller'].forEach((m) => { $('mode-' + m).style.display = m === mode ? 'block' : 'none'; });
+  if (mode === 'controller') startPadLoop();
+  sendDrive();
+}
+document.querySelectorAll('#mode-tabs .tab').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+function releaseAllInputs() {
+  keysHeld.clear(); renderKeyRows();
+  sticks.forEach((s) => s.release(true));
+  ACTIONS.forEach((a) => { padValues[a] = 0; });
+  ['key-L', 'key-R', 'btn-L', 'btn-R', 'pad-L', 'pad-R'].forEach((src) => jogSources.delete(src));
+  jogKeysDown.clear(); renderJogRows();
+  renderWeapon();
+}
+
+// ---------------------------------------------------------------------
+// Joystick mode: throttle stick gives W/S, steering stick gives A/D
+// ---------------------------------------------------------------------
+function makeStick(id) {
+  const track = $(id), knob = track.querySelector('.knob'), label = $(id + '-label'), valEl = $(id + '-val');
+  const st = { role: 'vertical', value: 0, dragging: false, pointer: null };
+  const KNOB = 62;
+  function travel() {
+    const r = track.getBoundingClientRect();
+    return Math.max(1, ((st.role === 'vertical' ? r.height : r.width) - KNOB) / 2);
+  }
+  function draw() {
+    const t = travel();
+    knob.style.transform = st.role === 'vertical'
+      ? `translate(-50%, calc(-50% + ${-st.value * t}px))`
+      : `translate(calc(-50% + ${st.value * t}px), -50%)`;
+    const n = n2(Math.abs(st.value));
+    valEl.textContent = st.value === 0 ? '0' : st.role === 'vertical' ? (st.value > 0 ? `W = ${n}` : `S = ${n}`) : (st.value > 0 ? `D = ${n}` : `A = ${n}`);
+    label.textContent = st.role === 'vertical' ? 'Throttle (W / S)' : 'Steering (A / D)';
+  }
+  function move(e) {
+    const r = track.getBoundingClientRect(), t = travel();
+    if (st.role === 'vertical') st.value = clamp(-(e.clientY - (r.top + r.height / 2)) / t, -1, 1);
+    else st.value = clamp((e.clientX - (r.left + r.width / 2)) / t, -1, 1);
+    draw();
+    if (mode === 'joystick') sendDrive();
+  }
+  track.addEventListener('pointerdown', (e) => { track.setPointerCapture(e.pointerId); st.dragging = true; st.pointer = e.pointerId; move(e); });
+  track.addEventListener('pointermove', (e) => { if (st.dragging && e.pointerId === st.pointer) move(e); });
+  const end = () => api.release();
+  track.addEventListener('pointerup', end);
+  track.addEventListener('pointercancel', end);
+  const api = {
+    get role() { return st.role; },
+    get value() { return st.value; },
+    setRole(r) { st.role = r; st.value = 0; st.dragging = false; track.classList.toggle('vertical', r === 'vertical'); track.classList.toggle('horizontal', r === 'horizontal'); draw(); },
+    release(silent) { st.dragging = false; st.value = 0; draw(); if (!silent && mode === 'joystick') sendDrive(); },
+  };
+  return api;
+}
+const sticks = [makeStick('stick-a'), makeStick('stick-b')];
+function applyStickRoles(verticalFirst) {
+  sticks[0].setRole(verticalFirst ? 'vertical' : 'horizontal');
+  sticks[1].setRole(verticalFirst ? 'horizontal' : 'vertical');
+}
+let verticalFirst = load('mkf-vertical-first', true) !== false;
+applyStickRoles(verticalFirst);
+$('swap-btn').addEventListener('click', () => { verticalFirst = !verticalFirst; save('mkf-vertical-first', verticalFirst); applyStickRoles(verticalFirst); sendDrive(); });
+function stickWASD() {
+  const v = sticks.find((s) => s.role === 'vertical').value;
+  const h = sticks.find((s) => s.role === 'horizontal').value;
+  return { W: Math.max(v, 0), S: Math.max(-v, 0), D: Math.max(h, 0), A: Math.max(-h, 0) };
+}
+
+// ---------------------------------------------------------------------
+// Keyboard mode: four rebindable keys (default W A S D)
+// ---------------------------------------------------------------------
+const DEFAULT_KEYS = { forward: 'w', backward: 's', left: 'a', right: 'd' };
+let keyBinds = Object.assign({}, DEFAULT_KEYS, load('mkf-keys', {}));
+const keysHeld = new Set();
+let keyListening = null;
+
+// Weapon hot keys (any mode), rebindable like WASD. Default Q = L, E = R.
+const DEFAULT_JOG_KEYS = { L: 'q', R: 'e' };
+let jogKeys = Object.assign({}, DEFAULT_JOG_KEYS, load('mkf-jog-keys', {}));
+let jogListening = null;
+const jogKeysDown = new Set();
+const jogForKey = (k) => (jogKeys.L === k ? 'L' : jogKeys.R === k ? 'R' : null);
+
+function buildRows(containerId, onClick) {
+  const c = $(containerId);
+  c.innerHTML = '';
+  ACTIONS.forEach((a) => {
+    const row = document.createElement('div');
+    row.className = 'bind-row'; row.dataset.action = a;
+    const name = document.createElement('span'); name.className = 'bind-name'; name.textContent = ACTION_LABEL[a];
+    const btn = document.createElement('button'); btn.className = 'bind-btn';
+    btn.addEventListener('click', () => onClick(a));
+    const val = document.createElement('span'); val.className = 'bind-val'; val.textContent = '0';
+    row.append(name, btn, val);
+    c.appendChild(row);
+  });
+}
+function keyName(k) {
+  const arrows = { arrowup: '↑', arrowdown: '↓', arrowleft: '←', arrowright: '→' };
+  return k === ' ' ? 'space' : arrows[k] || k;
+}
+
+buildRows('key-rows', (a) => { keyListening = keyListening === a ? null : a; jogListening = null; renderKeyRows(); renderJogRows(); });
+function renderKeyRows() {
+  document.querySelectorAll('#key-rows .bind-row').forEach((row) => {
+    const a = row.dataset.action, held = keysHeld.has(a);
+    const btn = row.querySelector('.bind-btn');
+    btn.textContent = keyListening === a ? 'press…' : keyName(keyBinds[a]);
+    btn.classList.toggle('listening', keyListening === a);
+    row.classList.toggle('on', held);
+    row.querySelector('.bind-val').textContent = held ? '1' : '0';
+  });
+}
+renderKeyRows();
+
+(function buildJogRows() {
+  const c = $('jog-key-rows');
+  for (const side of ['L', 'R']) {
+    const row = document.createElement('div');
+    row.className = 'bind-row'; row.dataset.side = side;
+    const name = document.createElement('span'); name.className = 'bind-name';
+    name.textContent = side === 'L' ? '\u25c0 L key' : 'R key \u25b6';
+    const btn = document.createElement('button'); btn.className = 'bind-btn';
+    btn.addEventListener('click', () => { jogListening = jogListening === side ? null : side; keyListening = null; renderKeyRows(); renderJogRows(); });
+    const val = document.createElement('span'); val.className = 'bind-val'; val.textContent = '0';
+    row.append(name, btn, val);
+    c.appendChild(row);
+  }
+})();
+function renderJogRows() {
+  document.querySelectorAll('#jog-key-rows .bind-row').forEach((row) => {
+    const side = row.dataset.side, held = jogKeysDown.has(side);
+    const btn = row.querySelector('.bind-btn');
+    btn.textContent = jogListening === side ? 'press\u2026' : keyName(jogKeys[side]);
+    btn.classList.toggle('listening', jogListening === side);
+    row.classList.toggle('on', held);
+    row.querySelector('.bind-val').textContent = held ? '1' : '0';
+  });
+}
+renderJogRows();
+$('jog-key-reset').addEventListener('click', () => {
+  jogKeys = Object.assign({}, DEFAULT_JOG_KEYS); jogListening = null;
+  // if a drive key was moved onto Q/E, give it back its default
+  for (const a of ACTIONS) if (jogForKey(keyBinds[a])) keyBinds[a] = DEFAULT_KEYS[a];
+  save('mkf-jog-keys', jogKeys); save('mkf-keys', keyBinds); renderJogRows(); renderKeyRows();
+});
+
+$('key-reset').addEventListener('click', () => {
+  keyBinds = Object.assign({}, DEFAULT_KEYS); keyListening = null; keysHeld.clear();
+  save('mkf-keys', keyBinds); renderKeyRows(); sendDrive();
+});
+const actionForKey = (k) => ACTIONS.find((a) => keyBinds[a] === k) || null;
+const typingInField = (e) => e.target && e.target.tagName === 'INPUT' && e.target.type === 'text';
+
+window.addEventListener('keydown', (e) => {
+  if (typingInField(e)) return;
+  const k = e.key.toLowerCase();
+
+  if (jogListening) {
+    e.preventDefault();
+    if (k === 'escape') { jogListening = null; renderJogRows(); return; }
+    const drive = actionForKey(k);
+    if (drive) { log(`"${keyName(k)}" already drives ${drive} - pick another key for the weapon`); return; }
+    const other = jogListening === 'L' ? 'R' : 'L';
+    if (jogKeys[other] === k) jogKeys[other] = jogKeys[jogListening];   // swap L and R
+    jogKeys[jogListening] = k;
+    jogListening = null;
+    save('mkf-jog-keys', jogKeys);
+    renderJogRows();
+    return;
+  }
+
+  if (mode === 'keyboard' && keyListening) {
+    e.preventDefault();
+    const j = jogForKey(k);
+    if (j) { log(`"${keyName(k)}" is the weapon ${j} key - pick another, or rebind the weapon keys first`); return; }
+    if (k === 'escape') { keyListening = null; renderKeyRows(); return; }
+    const other = actionForKey(k);
+    if (other && other !== keyListening) keyBinds[other] = keyBinds[keyListening]; // swap on conflict
+    keyBinds[keyListening] = k;
+    keyListening = null;
+    save('mkf-keys', keyBinds);
+    renderKeyRows();
+    return;
+  }
+
+  const jog = jogForKey(k);
+  if (jog) {
+    e.preventDefault();
+    if (!e.repeat) { jogKeysDown.add(jog); renderJogRows(); setJog('key-' + jog, true); }
+    return;
+  }
+
+  if (mode !== 'keyboard') return;
+  const a = actionForKey(k);
+  if (!a) return;
+  e.preventDefault();
+  if (keysHeld.has(a)) return;
+  keysHeld.add(a); renderKeyRows(); sendDrive();
+});
+
+window.addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  const jog = jogForKey(k);
+  if (jog) { e.preventDefault(); jogKeysDown.delete(jog); renderJogRows(); setJog('key-' + jog, false); return; }
+  if (mode !== 'keyboard') return;
+  const a = actionForKey(k);
+  if (!a) return;
+  e.preventDefault();
+  keysHeld.delete(a); renderKeyRows(); sendDrive();
+});
+
+window.addEventListener('blur', () => { releaseAllInputs(); sendDrive(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { releaseAllInputs(); sendDrive(); } });
+
+function keyWASD() {
+  return {
+    W: keysHeld.has('forward') ? 1 : 0, S: keysHeld.has('backward') ? 1 : 0,
+    A: keysHeld.has('left') ? 1 : 0, D: keysHeld.has('right') ? 1 : 0,
+  };
+}
+
+// ---------------------------------------------------------------------
+// Controller mode: four rebindable inputs, proportional 0..1
+// ---------------------------------------------------------------------
+const DEFAULT_PAD = {
+  forward:  { type: 'axis', index: 1, sign: -1 },
+  backward: { type: 'axis', index: 1, sign: 1 },
+  left:     { type: 'axis', index: 0, sign: -1 },
+  right:    { type: 'axis', index: 0, sign: 1 },
+};
+const PAD_DEADZONE = 0.12, PAD_LISTEN = 0.5, PAD_JOG_L = 4, PAD_JOG_R = 5; // L1/LB and R1/RB
+let padBinds = Object.assign(JSON.parse(JSON.stringify(DEFAULT_PAD)), load('mkf-pad', {}));
+let padListening = null;
+const padValues = { forward: 0, backward: 0, left: 0, right: 0 };
+let padStyle = load('mkf-pad-style', 'playstation');
+let padLoopOn = false;
+const BUTTONS = {
+  playstation: ['✕', '○', '□', '△', 'L1', 'R1', 'L2', 'R2', 'Share', 'Options', 'L3', 'R3', 'D↑', 'D↓', 'D←', 'D→', 'PS'],
+  xbox: ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'View', 'Menu', 'LS', 'RS', 'D↑', 'D↓', 'D←', 'D→', 'Xbox'],
+};
+const AXES = [['L ←', 'L →'], ['L ↑', 'L ↓'], ['R ←', 'R →'], ['R ↑', 'R ↓']];
+
+function padLabel(b) {
+  if (!b) return '-';
+  if (b.type === 'button') return (BUTTONS[padStyle] || BUTTONS.playstation)[b.index] || `Btn ${b.index}`;
+  const names = AXES[b.index];
+  return names ? names[b.sign > 0 ? 1 : 0] : `Axis ${b.index}${b.sign > 0 ? '+' : '-'}`;
+}
+const sameBind = (a, b) => a && b && a.type === b.type && a.index === b.index && (a.type === 'button' || a.sign === b.sign);
+
+buildRows('pad-rows', (a) => { padListening = padListening === a ? null : a; renderPadRows(); });
+function renderPadRows() {
+  document.querySelectorAll('#pad-rows .bind-row').forEach((row) => {
+    const a = row.dataset.action, v = padValues[a];
+    const btn = row.querySelector('.bind-btn');
+    btn.textContent = padListening === a ? 'press…' : padLabel(padBinds[a]);
+    btn.classList.toggle('listening', padListening === a);
+    row.classList.toggle('on', v > 0);
+    row.querySelector('.bind-val').textContent = n2(v);
+  });
+}
+function setPadStyle(s) {
+  padStyle = s; save('mkf-pad-style', s);
+  document.querySelectorAll('.style-tabs .tab').forEach((b) => b.classList.toggle('active', b.dataset.style === s));
+  renderPadRows();
+}
+document.querySelectorAll('.style-tabs .tab').forEach((b) => b.addEventListener('click', () => setPadStyle(b.dataset.style)));
+$('pad-reset').addEventListener('click', () => {
+  padBinds = JSON.parse(JSON.stringify(DEFAULT_PAD)); padListening = null; save('mkf-pad', padBinds); renderPadRows();
+});
+
+function firstPad() {
+  if (!navigator.getGamepads) return null;
+  for (const gp of navigator.getGamepads()) if (gp) return gp;
+  return null;
+}
+function startPadLoop() {
+  if (padLoopOn) return;
+  padLoopOn = true;
+  requestAnimationFrame(padTick);
+}
+let lastPadSig = '';
+function padTick() {
+  if (mode !== 'controller') {
+    padLoopOn = false;
+    ACTIONS.forEach((a) => { padValues[a] = 0; });
+    setJog('pad-L', false); setJog('pad-R', false);
+    return;
+  }
+  const status = $('pad-status');
+  if (!navigator.getGamepads) {
+    status.textContent = 'This browser blocks controllers on this page. Open mariokartfinal.html from your laptop (Bluetooth), or try Chrome/Edge.';
+    status.classList.remove('ok');
+    padLoopOn = false;
+    return;
+  }
+  const gp = firstPad();
+  if (gp) { status.textContent = 'Connected: ' + gp.id; status.classList.add('ok'); }
+  else { status.textContent = 'No controller detected - press any button on it.'; status.classList.remove('ok'); }
+
+  if (gp && padListening) {
+    let got = null;
+    gp.buttons.forEach((b, i) => { if (!got && i !== PAD_JOG_L && i !== PAD_JOG_R && b.value > PAD_LISTEN) got = { type: 'button', index: i }; });
+    if (!got) gp.axes.forEach((v, i) => { if (!got && Math.abs(v) > PAD_LISTEN) got = { type: 'axis', index: i, sign: v > 0 ? 1 : -1 }; });
+    if (got) {
+      const other = ACTIONS.find((a) => a !== padListening && sameBind(padBinds[a], got));
+      if (other) padBinds[other] = padBinds[padListening];
+      padBinds[padListening] = got; padListening = null; save('mkf-pad', padBinds);
+    }
+  } else if (gp) {
+    ACTIONS.forEach((a) => {
+      const b = padBinds[a];
+      let raw = 0;
+      if (b && b.type === 'button') raw = gp.buttons[b.index] ? gp.buttons[b.index].value : 0;
+      else if (b && b.type === 'axis') raw = clamp((gp.axes[b.index] || 0) * b.sign, 0, 1);
+      padValues[a] = raw > PAD_DEADZONE ? Math.round(raw * 100) / 100 : 0;
+    });
+    setJog('pad-L', !!(gp.buttons[PAD_JOG_L] && gp.buttons[PAD_JOG_L].pressed));
+    setJog('pad-R', !!(gp.buttons[PAD_JOG_R] && gp.buttons[PAD_JOG_R].pressed));
+  } else {
+    ACTIONS.forEach((a) => { padValues[a] = 0; });
+    setJog('pad-L', false); setJog('pad-R', false);
+  }
+  renderPadRows();
+  const sig = ACTIONS.map((a) => padValues[a]).join(',');
+  if (sig !== lastPadSig) { lastPadSig = sig; sendDrive(); }
+  requestAnimationFrame(padTick);
+}
+function padWASD() {
+  return { W: padValues.forward, S: padValues.backward, A: padValues.left, D: padValues.right };
+}
+
+// =====================================================================
+// Weapon servo: hold L / R to sweep the arm at "Swing speed";
+// release and it glides back to rest at "Retract speed" (0 = stays put).
+// The robot does the smooth motion; the page sends direction + speeds.
+// =====================================================================
+const servo = Object.assign({ speed: 120, rest: 60 }, load('mkf-servo', {}));
+servo.speed = clamp(Math.round(Number(servo.speed) || 120), 10, 300);
+servo.rest = clamp(Math.round(Number(servo.rest) || 0), 0, 300);
+const jogSources = new Set();
+let robotServoAngle = null;
+
+function weaponDir() {
+  let l = false, r = false;
+  jogSources.forEach((s) => { if (s.endsWith('L')) l = true; else r = true; });
+  return l === r ? 0 : (l ? -1 : 1);   // both or neither = no sweep
+}
+
+function renderWeapon() {
+  const dir = weaponDir();
+  $('jog-l').classList.toggle('on', dir === -1);
+  $('jog-r').classList.toggle('on', dir === 1);
+  const doing = dir === -1 ? 'sweeping left' : dir === 1 ? 'sweeping right' : (servo.rest > 0 ? 'returning to rest' : 'holding position');
+  $('weapon-readout').textContent = `Servo: ${doing}` + (robotServoAngle === null ? '' : `  (arm at ${robotServoAngle}°)`);
+}
+
+function setJog(src, on) {
+  if (on === jogSources.has(src)) return;
+  if (on) jogSources.add(src); else jogSources.delete(src);
+  renderWeapon();
+  sendDrive();
+}
+
+// kept for the connection code, which resyncs the weapon on connect
+function updateWeapon() { renderWeapon(); sendDrive(); }
+
+for (const side of ['L', 'R']) {
+  const b = $(side === 'L' ? 'jog-l' : 'jog-r');
+  b.addEventListener('pointerdown', (e) => { b.setPointerCapture(e.pointerId); setJog('btn-' + side, true); });
+  b.addEventListener('pointerup', () => setJog('btn-' + side, false));
+  b.addEventListener('pointercancel', () => setJog('btn-' + side, false));
+  b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); });
+}
+
+[['speed', 'servo-speed'], ['rest', 'servo-rest']].forEach(([key, id]) => {
+  const input = $(id), out = $(id + '-val');
+  const show = () => { out.textContent = key === 'rest' && servo.rest === 0 ? 'stay' : servo[key] + '°/s'; };
+  input.value = servo[key]; show();
+  input.addEventListener('input', () => {
+    servo[key] = Number(input.value);
+    show();
+    save('mkf-servo', servo);
+    renderWeapon();
+    sendDrive();
+  });
+});
+
+// Show the robot's real servo angle from its status reports
+const _onRobotStatus = onRobotStatus;
+onRobotStatus = function (text) {
+  _onRobotStatus(text);
+  if (text && text.startsWith('ST:')) {
+    const a = Number(text.slice(3).split(',')[2]);
+    if (Number.isFinite(a) && a !== robotServoAngle) { robotServoAngle = a; renderWeapon(); }
+  }
+};
+
+// =====================================================================
+// STOP, hardware test, keepalive
+// =====================================================================
+function stopAll() {
+  releaseAllInputs();
+  queueSend('cmd', 'X');
+  sendDrive();
+}
+$('stop-btn').addEventListener('click', () => { stopAll(); log('STOP'); });
+
+$('test-btn').addEventListener('click', () => {
+  if (!link.type) { log('connect first, or press the BOOT button on the ESP32 to run the test without a laptop'); return; }
+  queueSend('cmd', 'T');
+  log('hardware test requested - left motor fwd/rev, right motor fwd/rev, then servo left/right/rest');
+});
+
+setInterval(() => { if (link.type) sendDrive(); }, SEND_MS);
+
+// =====================================================================
+// Boot
+// =====================================================================
+setPadStyle(padStyle);
+document.querySelectorAll('#mode-tabs .tab').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+['joystick', 'keyboard', 'controller'].forEach((m) => { $('mode-' + m).style.display = m === mode ? 'block' : 'none'; });
+if (mode === 'controller') startPadLoop();
+renderWeapon();
+sendDrive();
+explainBrowser(false);
+
+if (servedByRobot) {
+  $('ble-btn').style.display = 'none';
+  connectWifi();
+}
+log('ready');
+</script>
+</body>
+</html>
+)MKF";
